@@ -1,0 +1,60 @@
+{
+  "name": "apicharts",
+  "version": "1.0.1",
+  "scripts": {
+    "lint": "eslint **/*.js",
+    "test": "nyc mocha $(find '../src' -name '*.spec.js') --recursive --require babel-core/register",
+    "dev": "mocha $(find src -name '*.spec.js') --recursive --require babel-core/register --watch",
+    "coverage": "nyc report --reporter=text-lcov | coveralls",
+    "prebuild": "rm -rf dist",
+    "build": "babel src --ignore '**/*.spec.js' --out-dir dist -d",
+    "postbuild": "cp package.json README.md dist/",
+    "postpublish": "cp package.json ../package.json"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "description": "Simple charting components for external & dynamic data sources... give it a url and go!",
+  "main": "dist/apichart.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kwhitley/apicharts.git"
+  },
+  "keywords": [
+    "charts",
+    "json",
+    "api",
+    "react",
+    "component",
+    "updates",
+    "polling"
+  ],
+  "author": "Kevin R. Whitley <krwhitley@gmail.com> (http://krwhitley.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kwhitley/apicharts/issues",
+    "email": "krwhitley@gmail.com"
+  },
+  "devDependencies": {
+    "axios": "^0.18.0",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
+    "babel-eslint": "^8.2.3",
+    "babel-plugin-transform-regenerator": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
+    "c3": "^0.6.5",
+    "chai": "^4.1.2",
+    "chai-datetime": "^1.5.0",
+    "coveralls": "^3.0.0",
+    "eslint": "^4.18.2",
+    "mocha": "^5.0.4",
+    "nyc": "^11.4.1",
+    "object-path": "^0.11.4",
+    "prop-types": "^15.6.2",
+    "react": "^16.4.1",
+    "react-c3-component": "^1.3.5",
+    "react-dom": "^16.4.1"
+  },
+  "dependencies": {}
+}
