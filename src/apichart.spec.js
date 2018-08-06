@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import ApiChart from '../dist/apichart'
+import ApiChart from './Apichart'
 
 describe('react-wrappers', function() {
   it('exposes default export as React function', function() {

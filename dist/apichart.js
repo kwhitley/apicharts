@@ -4,7 +4,41 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+var _assign = require('babel-runtime/core-js/object/assign');
+
+var _assign2 = _interopRequireDefault(_assign);
+
+var _keys = require('babel-runtime/core-js/object/keys');
+
+var _keys2 = _interopRequireDefault(_keys);
+
+var _regenerator = require('babel-runtime/regenerator');
+
+var _regenerator2 = _interopRequireDefault(_regenerator);
+
+var _asyncToGenerator2 = require('babel-runtime/helpers/asyncToGenerator');
+
+var _asyncToGenerator3 = _interopRequireDefault(_asyncToGenerator2);
+
+var _getPrototypeOf = require('babel-runtime/core-js/object/get-prototype-of');
+
+var _getPrototypeOf2 = _interopRequireDefault(_getPrototypeOf);
+
+var _classCallCheck2 = require('babel-runtime/helpers/classCallCheck');
+
+var _classCallCheck3 = _interopRequireDefault(_classCallCheck2);
+
+var _createClass2 = require('babel-runtime/helpers/createClass');
+
+var _createClass3 = _interopRequireDefault(_createClass2);
+
+var _possibleConstructorReturn2 = require('babel-runtime/helpers/possibleConstructorReturn');
+
+var _possibleConstructorReturn3 = _interopRequireDefault(_possibleConstructorReturn2);
+
+var _inherits2 = require('babel-runtime/helpers/inherits');
+
+var _inherits3 = _interopRequireDefault(_inherits2);
 
 var _react = require('react');
 
@@ -22,71 +56,79 @@ var _objectPath = require('object-path');
 
 var _objectPath2 = _interopRequireDefault(_objectPath);
 
-var _reactC3Component = require('react-c3-component');
+var _echartsForReact = require('echarts-for-react');
 
-var _reactC3Component2 = _interopRequireDefault(_reactC3Component);
+var _echartsForReact2 = _interopRequireDefault(_echartsForReact);
+
+var _baseConfigs = require('./baseConfigs');
+
+var _baseConfigs2 = _interopRequireDefault(_baseConfigs);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+var STREAM_LENGTH = 400;
 
-function _asyncToGenerator(fn) { return function () { var gen = fn.apply(this, arguments); return new Promise(function (resolve, reject) { function step(key, arg) { try { var info = gen[key](arg); var value = info.value; } catch (error) { reject(error); return; } if (info.done) { resolve(value); } else { return Promise.resolve(value).then(function (value) { step("next", value); }, function (err) { step("throw", err); }); } } return step("next"); }); }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-// import 'c3/c3.css'
+var datastream = [];
 
 var ApiChart = function (_Component) {
-  _inherits(ApiChart, _Component);
+  (0, _inherits3.default)(ApiChart, _Component);
 
   function ApiChart(props) {
-    _classCallCheck(this, ApiChart);
+    (0, _classCallCheck3.default)(this, ApiChart);
 
-    var _this = _possibleConstructorReturn(this, (ApiChart.__proto__ || Object.getPrototypeOf(ApiChart)).call(this, props));
+    var _this = (0, _possibleConstructorReturn3.default)(this, (ApiChart.__proto__ || (0, _getPrototypeOf2.default)(ApiChart)).call(this, props));
 
     _this.state = {
       fetching: false,
       success: false,
       response: undefined,
+      config: {},
       data: [],
-      extent: undefined,
-      seriesData: []
+      seriesData: [],
+      isPolling: false,
+      isLoaded: false
     };
 
-    _this.fetchData();
+    _this.fetchData = _this.fetchData.bind(_this);
+    _this.receiveData = _this.receiveData.bind(_this);
+    _this.getSeries = _this.getSeries.bind(_this);
+    _this.setChart = _this.setChart.bind(_this);
 
-    _this.setExtent = _this.setExtent.bind(_this);
+    // console.log('creating chart instance')
+    _this.fetchData({ url: _this.props.url });
     return _this;
   }
 
-  _createClass(ApiChart, [{
+  (0, _createClass3.default)(ApiChart, [{
     key: 'fetchData',
     value: function () {
-      var _ref = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
-        var useFetcher = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+      var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(_ref) {
+        var _this2 = this;
 
-        var _props, url, dataPath, formatter, useUrl, response, data, seriesData;
+        var _ref$useFetcher = _ref.useFetcher,
+            useFetcher = _ref$useFetcher === undefined ? false : _ref$useFetcher,
+            _ref$url = _ref.url,
+            url = _ref$url === undefined ? undefined : _ref$url;
 
-        return regeneratorRuntime.wrap(function _callee$(_context) {
+        var isPolling, _props, type, dataPath, formatter, pollingEnabled, pollingInterval, useUrl, response, data;
+
+        return _regenerator2.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                _props = this.props, url = _props.url, dataPath = _props.dataPath, formatter = _props.formatter;
+                isPolling = this.state.isPolling;
+                _props = this.props, type = _props.type, dataPath = _props.dataPath, formatter = _props.formatter, pollingEnabled = _props.pollingEnabled, pollingInterval = _props.pollingInterval;
 
                 if (url) {
-                  _context.next = 3;
+                  _context.next = 4;
                   break;
                 }
 
                 return _context.abrupt('return', false);
 
-              case 3:
+              case 4:
 
-                console.log('loading data from ' + url + '...');
+                // console.log(`loading data from ${url}...`)
 
                 useUrl = useFetcher ? '/api/fetch?url=' + url : url;
                 _context.prev = 5;
@@ -97,60 +139,49 @@ var ApiChart = function (_Component) {
 
               case 8:
                 response = _context.sent;
-
-                // console.log('response', response)
                 data = dataPath ? _objectPath2.default.get(response, dataPath) : response;
 
-                // console.log('data', data)
 
                 if (data && formatter) {
-                  // console.log('data', data)
-                  // console.log('formatter', formatter)
                   data = data.map(formatter);
-
-                  // console.log('transformed', data)
                 }
 
-                seriesData = this.getSeries(data);
+                data.reverse();
+                this.receiveData(data);
 
-                // console.log('seriesData', seriesData)
-
-                this.setState({ response: response, data: data, seriesData: seriesData });
-                _context.next = 19;
+                if (pollingEnabled && !this.poller) {
+                  // console.log('polling enabled, setting polling interval of', pollingInterval, 'seconds')
+                  this.poller = setInterval(function () {
+                    return _this2.fetchData({ url: url, useFetcher: useFetcher });
+                  }, pollingInterval);
+                  this.setState({ isPolling: true });
+                }
+                _context.next = 20;
                 break;
 
-              case 15:
-                _context.prev = 15;
+              case 16:
+                _context.prev = 16;
                 _context.t0 = _context['catch'](5);
 
                 if (!useFetcher) {
-                  this.fetchData(true); // try once with fetcher when CORS blocked
+                  this.fetchData({ useFetcher: true, url: url }); // try once with fetcher when CORS blocked
                 }
                 console.warn(_context.t0);
 
-              case 19:
+              case 20:
               case 'end':
                 return _context.stop();
             }
           }
-        }, _callee, this, [[5, 15]]);
+        }, _callee, this, [[5, 16]]);
       }));
 
-      function fetchData() {
-        return _ref.apply(this, arguments);
+      function fetchData(_x) {
+        return _ref2.apply(this, arguments);
       }
 
       return fetchData;
     }()
-  }, {
-    key: 'componentDidUpdate',
-    value: function componentDidUpdate(_ref2) {
-      var url = _ref2.url;
-
-      if (url !== this.props.url) {
-        this.fetchData();
-      }
-    }
   }, {
     key: 'getSeries',
     value: function getSeries(data) {
@@ -171,7 +202,7 @@ var ApiChart = function (_Component) {
 
 
         if (!xPath && timeseries && autodetect) {
-          xPath = Object.keys(data[0]).find(function (k) {
+          xPath = (0, _keys2.default)(data[0]).find(function (k) {
             return k.toLowerCase().includes('time') || k.toLowerCase().includes('date');
           });
         }
@@ -189,113 +220,147 @@ var ApiChart = function (_Component) {
           });
         }
 
-        return { name: name, values: { x: x, y: y } };
+        return { name: name, data: { x: x, y: y } };
       });
 
       return seriesData;
     }
   }, {
-    key: 'setExtent',
-    value: function setExtent(extent) {
-      console.log('setting extent', extent);
-      this.setState({ extent: extent });
+    key: 'receiveData',
+    value: function receiveData(data) {
+      var _props3 = this.props,
+          series = _props3.series,
+          stacked = _props3.stacked;
+
+
+      var config = _baseConfigs2.default.timeseries(this.props);
+
+      if (!data || !data.length) {
+        return [];
+      }
+
+      // if (timeseries && autodetect) {
+      //   config.xAxis.type = 'time'
+      //   let xPath = Object.keys(data[0]).find(k => k.toLowerCase().includes('time') || k.toLowerCase().includes('date'))
+
+      //   config.xAxis.data = data.map(r => new Date(r[xPath]))
+      // }
+
+      series.forEach(function (s) {
+        var path = s.path,
+            label = s.label,
+            _s$lines = s.lines,
+            lines = _s$lines === undefined ? [] : _s$lines,
+            color = s.color,
+            fill = s.fill;
+
+
+        lines = lines.map(function (line) {
+          return {
+            type: line.type || line,
+            name: line.type || line,
+            label: {
+              // formatter: `{b}\n{c}`,
+              // fontSize: 10,
+            },
+            lineStyle: {
+              color: color
+            }
+          };
+        });
+
+        var extendedSeries = (0, _assign2.default)({
+          name: label,
+          type: 'line',
+          smooth: true,
+          color: '#f0f',
+          animation: Boolean(s.animation),
+          showSymbol: false,
+          symbolSize: s.type === 'scatter' ? 3 : 10,
+          hoverAnimation: false,
+          data: data.map(function (r) {
+            return [r.openTime, r[path]];
+          }),
+          markLine: {
+            data: lines
+          },
+          stack: stacked,
+          areaStyle: fill ? {
+            opacity: fill || 0.4
+          } : undefined
+          // markArea: {
+          //   // itemStyle: {
+          //   //   // color: '#e00',
+          //   // },
+          //   data: [
+          //     [
+          //       {
+          //         name: 'from min to max'
+          //         // coord: ['min', 'max']
+          //         type: 'min'
+          //       },
+          //       {
+          //         type: 'max'
+          //       }
+
+          //     ]
+          //   ]
+          // },
+        }, s);
+
+        config.series.push(extendedSeries);
+      });
+
+      this.setState({ config: config });
+    }
+  }, {
+    key: 'shouldComponentUpdate',
+    value: function shouldComponentUpdate(nextProps, nextState) {
+      var _state = this.state,
+          isLoaded = _state.isLoaded,
+          seriesData = _state.seriesData;
+
+
+      if (nextProps.url !== this.props.url) {
+        console.log('shouldComponentUpdate:fetching data...');
+        this.fetchData({ url: nextProps.url });
+      } else {
+        // return true// this.updateChartData(nextState, nextProps)
+      }
 
       return true;
     }
+  }, {
+    key: 'componentWillUnmount',
+    value: function componentWillUnmount() {
+      console.log('unmounted chart instance');
 
-    // shouldComponentUpdate(nextProps, nextState) {
-    //   let { url, type } = this.props
-    //   return nextProps.url !== url || nextProps.type !== type
-    // }
-
+      this.chart && this.chart.dispose();
+    }
+  }, {
+    key: 'setChart',
+    value: function setChart(chart) {
+      window.chart = this.chart = chart;
+    }
   }, {
     key: 'render',
     value: function render() {
-      var _props3 = this.props,
-          title = _props3.title,
-          type = _props3.type,
-          zerobased = _props3.zerobased;
-      var _state = this.state,
-          seriesData = _state.seriesData,
-          extent = _state.extent;
+      // console.log('rendering chart...', this.state.config)
 
-      var columns = seriesData.map(function (s) {
-        return [s.name].concat(_toConsumableArray(s.values.y));
+      return _react2.default.createElement(_echartsForReact2.default, {
+        style: { height: '100%' },
+        option: this.state.config,
+        onChartReady: this.setChart
       });
-
-      if (seriesData.length) {
-        columns.unshift(['x'].concat(_toConsumableArray(seriesData[0].values.x)));
-      }
-
-      return _react2.default.createElement(
-        'div',
-        null,
-        title && _react2.default.createElement(
-          'h3',
-          null,
-          title
-        ),
-        _react2.default.createElement(_reactC3Component2.default, { config: {
-            chart: {
-              color: {
-                pattern: ['#114B5F', '#028090', '#456990', '#F45B69']
-              }
-            },
-            data: {
-              type: type,
-              x: 'x',
-              columns: columns,
-              selection: {
-                enabled: true,
-                draggable: true
-              }
-            },
-            grid: {
-              x: {
-                show: true,
-                lines: [{ value: new Date(new Date() - 10000), text: 'Today' }]
-              }
-            },
-            point: {
-              show: false
-            },
-            zoom: {
-              enabled: true,
-              rescale: true
-              // onzoomend: this.setExtent,
-              // extent
-            },
-            bar: {
-              zerobased: zerobased
-            },
-            area: {
-              zerobased: zerobased
-            },
-            axis: {
-              x: {
-                type: 'timeseries',
-                tick: {
-                  format: '%Y-%m-%d'
-                }
-              }
-            },
-            legend: {
-              item: {
-                onclick: function onclick(id) {
-                  return console.log('clicked on legend:' + id);
-                }
-              }
-            }
-          } })
-      );
     }
   }]);
-
   return ApiChart;
 }(_react.Component);
 
 ApiChart.defaultProps = {
-  zerobased: true
+  zerobased: true,
+  isPolling: false,
+  pollingInterval: 1000
 };
 
 exports.default = ApiChart;

@@ -1,4 +1,4 @@
 {
-  "plugins": ["transform-regenerator"],
+  "plugins": [ "external-helpers", "transform-runtime", "transform-object-rest-spread" ],
   "presets": [ "env", "react" ]
 }

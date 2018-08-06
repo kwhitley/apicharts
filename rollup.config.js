@@ -9,8 +9,10 @@ export default {
   plugins: [
     babel({
       babelrc: false,
+      runtimeHelpers: true,
       exclude: 'node_modules/**',
-      presets: [ [ 'env', { modules: false } ] ],
+      presets: [['env', { modules: false }], 'react'],
+      plugins: ['external-helpers', 'transform-runtime', 'transform-object-rest-spread'],
     }),
   ],
   external,
