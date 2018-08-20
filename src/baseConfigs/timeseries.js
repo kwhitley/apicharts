@@ -34,6 +34,7 @@ const getYAxis = (series, timeseries, yAxis, autoscale) => {
 }
 
 export default ({
+  animation,
   autoscale,
   colors,
   legend,
@@ -46,7 +47,7 @@ export default ({
   zoomable,
   zoomslider,
 }) => ({
-  animation: true,
+  animation: animation === false ? false : true,
   title: {
     text: title,
     top: 5,
