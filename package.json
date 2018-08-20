@@ -1,6 +1,6 @@
 {
   "name": "apicharts",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scripts": {
     "lint": "eslint **/*.js",
     "test": "nyc mocha $(find '../src' -name '*.spec.js') --recursive --require babel-core/register",
