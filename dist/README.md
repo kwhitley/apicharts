@@ -1,4 +1,4 @@
-apicharts
+apicharts (warning: preproduction = API changing constantly, stay tuned)
 =======
 #### Displaying charts from an API feed should be easy.  Now it is.
 

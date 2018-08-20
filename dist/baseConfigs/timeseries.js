@@ -3,6 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+
+var _assign = require('babel-runtime/core-js/object/assign');
+
+var _assign2 = _interopRequireDefault(_assign);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var getXAxisHeight = function getXAxisHeight(xAxis) {
   return 0;
 }; //xAxis ? 30 : 0
@@ -25,20 +32,51 @@ var hasLines = function hasLines(series) {
   }));
 };
 var getMarkLineWidth = function getMarkLineWidth(series) {
-  return hasLines(series) ? 35 : 0;
+  return hasMultipleAxis(series) ? 0 : hasLines(series) ? 35 : 0;
+};
+var hasMultipleAxis = function hasMultipleAxis(series) {
+  return Boolean(series.find(function (s) {
+    return s.yAxis === 'right';
+  }));
+};
+
+var getYAxis = function getYAxis(series, timeseries, yAxis, autoscale) {
+  var axis = {
+    show: Boolean(yAxis),
+    scale: autoscale,
+    splitLine: {
+      show: yAxis && yAxis.grid
+    },
+    splitNumber: yAxis && yAxis.ticks || 1,
+    splitArea: {
+      show: yAxis && yAxis.area
+    },
+    name: yAxis && yAxis.label,
+    nameTextStyle: {
+      align: 'center',
+      fontWeight: 'bold'
+    }
+  };
+
+  var axis2 = (0, _assign2.default)({}, axis, {
+    name: yAxis && yAxis.labelRight
+  });
+
+  return hasMultipleAxis(series) ? [axis, axis2] : axis;
 };
 
 exports.default = function (_ref) {
-  var title = _ref.title,
-      autoscale = _ref.autoscale,
-      datazoom = _ref.datazoom,
+  var autoscale = _ref.autoscale,
+      colors = _ref.colors,
       legend = _ref.legend,
+      series = _ref.series,
+      timeseries = _ref.timeseries,
+      title = _ref.title,
       tooltip = _ref.tooltip,
       xAxis = _ref.xAxis,
       yAxis = _ref.yAxis,
-      series = _ref.series,
       zoomable = _ref.zoomable,
-      rangeslider = _ref.rangeslider;
+      zoomslider = _ref.zoomslider;
   return {
     animation: true,
     title: {
@@ -46,12 +84,13 @@ exports.default = function (_ref) {
       top: 5,
       x: 'center'
     },
+    color: colors || ['#383', '#68e', '#61a0a8', '#d48265', '#91c7ae', '#749f83', '#ca8622', '#bda29a', '#6e7074', '#546570', '#c4ccd3'],
     grid: {
       containLabel: true,
       top: 20 + getTitleHeight(title) + getLegendHeight(legend),
       left: 20 + getYAxisWidth(yAxis),
       right: 20 + (getYAxisWidth(yAxis) || getMarkLineWidth(series)),
-      bottom: 20 + getDataZoomHeight(zoomable) + getXAxisHeight(xAxis),
+      bottom: 20 + getDataZoomHeight(zoomslider) + getXAxisHeight(xAxis),
       height: 'auto'
     },
     legend: {
@@ -79,7 +118,12 @@ exports.default = function (_ref) {
     },
     xAxis: {
       show: Boolean(xAxis),
-      type: 'time',
+      type: Boolean(timeseries) ? 'time' : 'category',
+      name: xAxis && xAxis.label,
+      nameTextStyle: {
+        align: 'center',
+        fontWeight: 'bold'
+      },
       splitLine: {
         show: xAxis && xAxis.grid
       },
@@ -88,23 +132,13 @@ exports.default = function (_ref) {
         show: xAxis && xAxis.area
       }
     },
-    yAxis: {
-      show: Boolean(yAxis),
-      scale: autoscale,
-      splitLine: {
-        show: yAxis && yAxis.grid
-      },
-      splitNumber: yAxis && yAxis.ticks || 1,
-      splitArea: {
-        show: yAxis && yAxis.area
-      }
-    },
+    yAxis: getYAxis(series, timeseries, yAxis, autoscale),
     dataZoom: [{
       type: 'inside',
-      show: Boolean(zoomable)
+      disabled: !Boolean(zoomable)
     }, {
       type: 'slider',
-      show: Boolean(rangeslider)
+      show: Boolean(zoomslider)
     }],
     series: []
   };

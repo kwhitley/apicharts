@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import axios from 'axios'
 import path from 'object-path'
 import ReactEcharts from 'echarts-for-react'
+import { getMilliseconds } from 'supergeneric/time'
 import baseConfigs from './baseConfigs'
 
 const STREAM_LENGTH = 400
@@ -28,14 +29,13 @@ class ApiChart extends Component {
     this.receiveData = this.receiveData.bind(this)
     this.getSeries = this.getSeries.bind(this)
     this.setChart = this.setChart.bind(this)
-
-    // console.log('creating chart instance')
-    this.fetchData({ url: this.props.url })
   }
+
+  // pushData(series, )
 
   async fetchData({ useFetcher = false, url = undefined }) {
     let { isPolling } = this.state
-    let { type, dataPath, formatter, pollingEnabled, pollingInterval } = this.props
+    let { type, dataPath, formatter, polling, getFeed, getFeedItem } = this.props
 
     if (!url) {
       return false
@@ -48,17 +48,18 @@ class ApiChart extends Component {
     try {
       let response = await axios.get(useUrl).then(r => r.data)
       let data = dataPath ? path.get(response, dataPath) : response
+      data = getFeed ? getFeed(data) : response
 
-      if (data && formatter) {
-        data = data.map(formatter)
+      if (data && getFeedItem) {
+        data = data.map(getFeedItem)
       }
 
       data.reverse()
       this.receiveData(data)
 
-      if (pollingEnabled && !this.poller) {
+      if (polling && !this.poller) {
         // console.log('polling enabled, setting polling interval of', pollingInterval, 'seconds')
-        this.poller = setInterval(() => this.fetchData({ url, useFetcher }), pollingInterval)
+        this.poller = setInterval(() => this.fetchData({ url, useFetcher }), getMilliseconds(polling) || 10000)
         this.setState({ isPolling: true })
       }
     } catch(err) {
@@ -97,23 +98,21 @@ class ApiChart extends Component {
   }
 
   receiveData(data) {
-    let { series, stacked } = this.props
-
+    let { series, stacked, timeseries } = this.props
+    let exampleRow = data && data.length ? data[0] : {}
     let config = baseConfigs.timeseries(this.props)
 
     if (!data || !data.length) {
       return []
     }
 
-    // if (timeseries && autodetect) {
-    //   config.xAxis.type = 'time'
-    //   let xPath = Object.keys(data[0]).find(k => k.toLowerCase().includes('time') || k.toLowerCase().includes('date'))
-
-    //   config.xAxis.data = data.map(r => new Date(r[xPath]))
-    // }
-
     series.forEach(s => {
       let { path, label, lines = [], color, fill } = s
+      let xpath = Object.keys(exampleRow).includes(timeseries) ? timeseries : undefined
+
+      if (timeseries && !xpath) {
+        xpath = Object.keys(data[0]).find(k => k.toLowerCase().includes('time') || k.toLowerCase().includes('date'))
+      }
 
       lines = lines.map(line => ({
         type: line.type || line,
@@ -131,12 +130,11 @@ class ApiChart extends Component {
         name: label,
         type: 'line',
         smooth: true,
-        color: '#f0f',
         animation: Boolean(s.animation),
         showSymbol: false,
         symbolSize: s.type === 'scatter' ? 3 : 10,
         hoverAnimation: false,
-        data: data.map(r => [r.openTime, r[path]]),
+        data: data.map(r => [r[xpath], r[path]]),
         markLine: {
           data: lines
         },
@@ -144,6 +142,7 @@ class ApiChart extends Component {
         areaStyle: fill ? {
           opacity: fill || 0.4
         } : undefined,
+        yAxisIndex: s.yAxis === 'right' ? 1 : undefined,
         // markArea: {
         //   // itemStyle: {
         //   //   // color: '#e00',
@@ -174,29 +173,36 @@ class ApiChart extends Component {
     let { isLoaded, seriesData } = this.state
 
     if (nextProps.url !== this.props.url) {
-      console.log('shouldComponentUpdate:fetching data...')
       this.fetchData({ url: nextProps.url })
-    } else {
-      // return true// this.updateChartData(nextState, nextProps)
     }
 
     return true
   }
 
+  componentWillMount() {
+    let { url } = this.props
+
+    url && this.fetchData({ url })
+  }
 
   componentWillUnmount() {
-    console.log('unmounted chart instance')
-
     this.chart && this.chart.dispose()
   }
 
   setChart(chart) {
+    let { events, callback } = this.props
+
     window.chart = this.chart = chart
+
+    Object.keys(events || {}).forEach(eventName => {
+      chart.on(eventName, (event) => events[eventName](event, chart))
+    })
+
+    // register callbacks on chart
+    callback && callback(chart)
   }
 
   render() {
-    // console.log('rendering chart...', this.state.config)
-
     return <ReactEcharts
             style={{ height: '100%' }}
             option={this.state.config}

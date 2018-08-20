@@ -60,6 +60,8 @@ var _echartsForReact = require('echarts-for-react');
 
 var _echartsForReact2 = _interopRequireDefault(_echartsForReact);
 
+var _time = require('supergeneric/time');
+
 var _baseConfigs = require('./baseConfigs');
 
 var _baseConfigs2 = _interopRequireDefault(_baseConfigs);
@@ -93,11 +95,10 @@ var ApiChart = function (_Component) {
     _this.receiveData = _this.receiveData.bind(_this);
     _this.getSeries = _this.getSeries.bind(_this);
     _this.setChart = _this.setChart.bind(_this);
-
-    // console.log('creating chart instance')
-    _this.fetchData({ url: _this.props.url });
     return _this;
   }
+
+  // pushData(series, )
 
   (0, _createClass3.default)(ApiChart, [{
     key: 'fetchData',
@@ -110,14 +111,14 @@ var ApiChart = function (_Component) {
             _ref$url = _ref.url,
             url = _ref$url === undefined ? undefined : _ref$url;
 
-        var isPolling, _props, type, dataPath, formatter, pollingEnabled, pollingInterval, useUrl, response, data;
+        var isPolling, _props, type, dataPath, formatter, polling, getFeed, getFeedItem, useUrl, response, data;
 
         return _regenerator2.default.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 isPolling = this.state.isPolling;
-                _props = this.props, type = _props.type, dataPath = _props.dataPath, formatter = _props.formatter, pollingEnabled = _props.pollingEnabled, pollingInterval = _props.pollingInterval;
+                _props = this.props, type = _props.type, dataPath = _props.dataPath, formatter = _props.formatter, polling = _props.polling, getFeed = _props.getFeed, getFeedItem = _props.getFeedItem;
 
                 if (url) {
                   _context.next = 4;
@@ -141,26 +142,27 @@ var ApiChart = function (_Component) {
                 response = _context.sent;
                 data = dataPath ? _objectPath2.default.get(response, dataPath) : response;
 
+                data = getFeed ? getFeed(data) : response;
 
-                if (data && formatter) {
-                  data = data.map(formatter);
+                if (data && getFeedItem) {
+                  data = data.map(getFeedItem);
                 }
 
                 data.reverse();
                 this.receiveData(data);
 
-                if (pollingEnabled && !this.poller) {
+                if (polling && !this.poller) {
                   // console.log('polling enabled, setting polling interval of', pollingInterval, 'seconds')
                   this.poller = setInterval(function () {
                     return _this2.fetchData({ url: url, useFetcher: useFetcher });
-                  }, pollingInterval);
+                  }, (0, _time.getMilliseconds)(polling) || 10000);
                   this.setState({ isPolling: true });
                 }
-                _context.next = 20;
+                _context.next = 21;
                 break;
 
-              case 16:
-                _context.prev = 16;
+              case 17:
+                _context.prev = 17;
                 _context.t0 = _context['catch'](5);
 
                 if (!useFetcher) {
@@ -168,12 +170,12 @@ var ApiChart = function (_Component) {
                 }
                 console.warn(_context.t0);
 
-              case 20:
+              case 21:
               case 'end':
                 return _context.stop();
             }
           }
-        }, _callee, this, [[5, 16]]);
+        }, _callee, this, [[5, 17]]);
       }));
 
       function fetchData(_x) {
@@ -230,21 +232,15 @@ var ApiChart = function (_Component) {
     value: function receiveData(data) {
       var _props3 = this.props,
           series = _props3.series,
-          stacked = _props3.stacked;
+          stacked = _props3.stacked,
+          timeseries = _props3.timeseries;
 
-
+      var exampleRow = data && data.length ? data[0] : {};
       var config = _baseConfigs2.default.timeseries(this.props);
 
       if (!data || !data.length) {
         return [];
       }
-
-      // if (timeseries && autodetect) {
-      //   config.xAxis.type = 'time'
-      //   let xPath = Object.keys(data[0]).find(k => k.toLowerCase().includes('time') || k.toLowerCase().includes('date'))
-
-      //   config.xAxis.data = data.map(r => new Date(r[xPath]))
-      // }
 
       series.forEach(function (s) {
         var path = s.path,
@@ -254,6 +250,13 @@ var ApiChart = function (_Component) {
             color = s.color,
             fill = s.fill;
 
+        var xpath = (0, _keys2.default)(exampleRow).includes(timeseries) ? timeseries : undefined;
+
+        if (timeseries && !xpath) {
+          xpath = (0, _keys2.default)(data[0]).find(function (k) {
+            return k.toLowerCase().includes('time') || k.toLowerCase().includes('date');
+          });
+        }
 
         lines = lines.map(function (line) {
           return {
@@ -273,13 +276,12 @@ var ApiChart = function (_Component) {
           name: label,
           type: 'line',
           smooth: true,
-          color: '#f0f',
           animation: Boolean(s.animation),
           showSymbol: false,
           symbolSize: s.type === 'scatter' ? 3 : 10,
           hoverAnimation: false,
           data: data.map(function (r) {
-            return [r.openTime, r[path]];
+            return [r[xpath], r[path]];
           }),
           markLine: {
             data: lines
@@ -287,7 +289,8 @@ var ApiChart = function (_Component) {
           stack: stacked,
           areaStyle: fill ? {
             opacity: fill || 0.4
-          } : undefined
+          } : undefined,
+          yAxisIndex: s.yAxis === 'right' ? 1 : undefined
           // markArea: {
           //   // itemStyle: {
           //   //   // color: '#e00',
@@ -322,31 +325,46 @@ var ApiChart = function (_Component) {
 
 
       if (nextProps.url !== this.props.url) {
-        console.log('shouldComponentUpdate:fetching data...');
         this.fetchData({ url: nextProps.url });
-      } else {
-        // return true// this.updateChartData(nextState, nextProps)
       }
 
       return true;
     }
   }, {
+    key: 'componentWillMount',
+    value: function componentWillMount() {
+      var url = this.props.url;
+
+
+      url && this.fetchData({ url: url });
+    }
+  }, {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
-      console.log('unmounted chart instance');
-
       this.chart && this.chart.dispose();
     }
   }, {
     key: 'setChart',
     value: function setChart(chart) {
+      var _props4 = this.props,
+          events = _props4.events,
+          callback = _props4.callback;
+
+
       window.chart = this.chart = chart;
+
+      (0, _keys2.default)(events || {}).forEach(function (eventName) {
+        chart.on(eventName, function (event) {
+          return events[eventName](event, chart);
+        });
+      });
+
+      // register callbacks on chart
+      callback && callback(chart);
     }
   }, {
     key: 'render',
     value: function render() {
-      // console.log('rendering chart...', this.state.config)
-
       return _react2.default.createElement(_echartsForReact2.default, {
         style: { height: '100%' },
         option: this.state.config,
