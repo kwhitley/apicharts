@@ -59,7 +59,7 @@ class ApiChart extends Component {
       if (polling && !this.poller) {
         // console.log('polling enabled, setting polling interval of', pollingInterval, 'seconds')
         this.poller = setInterval(() => this.fetchData(source), getMilliseconds(polling) || 10000)
-        this.setState({ isPolling: true })
+        this.chart && this.setState({ isPolling: true })
       }
     } catch(err) {
       if (!this.useFetcher) {
@@ -166,7 +166,7 @@ class ApiChart extends Component {
       config.series.push(extendedSeries)
     })
 
-    this.setState({ config })
+    this.chart && this.setState({ config })
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -183,10 +183,15 @@ class ApiChart extends Component {
     let { url } = this.props
 
     url && this.fetchData(url)
+
+    console.log('apichart mounted')
   }
 
   componentWillUnmount() {
     this.chart && this.chart.dispose()
+    this.chart = undefined
+
+    console.log('apichart unmounted')
   }
 
   setChart(chart) {
