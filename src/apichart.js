@@ -22,7 +22,7 @@ class ApiChart extends Component {
       data: [],
       seriesData: [],
       isPolling: false,
-      isLoaded: false
+      isLoaded: false,
     }
 
     this.fetchData = this.fetchData.bind(this)
@@ -33,17 +33,17 @@ class ApiChart extends Component {
 
   // pushData(series, )
 
-  async fetchData({ useFetcher = false, url = undefined }) {
+  async fetchData(source) {
     let { isPolling } = this.state
     let { type, dataPath, formatter, polling, getFeed, getFeedItem } = this.props
 
-    if (!url) {
+    if (!source) {
       return false
     }
 
     // console.log(`loading data from ${url}...`)
 
-    let useUrl = useFetcher ? ('/api/fetch?url=' + url) : url
+    let useUrl = this.useFetcher ? ('/api/fetch?url=' + source) : source
 
     try {
       let response = await axios.get(useUrl).then(r => r.data)
@@ -54,17 +54,17 @@ class ApiChart extends Component {
         data = data.map(getFeedItem)
       }
 
-      data.reverse()
       this.receiveData(data)
 
       if (polling && !this.poller) {
         // console.log('polling enabled, setting polling interval of', pollingInterval, 'seconds')
-        this.poller = setInterval(() => this.fetchData({ url, useFetcher }), getMilliseconds(polling) || 10000)
+        this.poller = setInterval(() => this.fetchData(source), getMilliseconds(polling) || 10000)
         this.setState({ isPolling: true })
       }
     } catch(err) {
-      if (!useFetcher) {
-        this.fetchData({ useFetcher: true, url }) // try once with fetcher when CORS blocked
+      if (!this.useFetcher) {
+        this.useFetcher = true
+        this.fetchData(source) // try again with fetcher when CORS blocked
       }
       console.warn(err)
     }
@@ -172,8 +172,8 @@ class ApiChart extends Component {
   shouldComponentUpdate(nextProps, nextState) {
     let { isLoaded, seriesData } = this.state
 
-    if (nextProps.url !== this.props.url) {
-      this.fetchData({ url: nextProps.url })
+    if (nextProps !== this.props) {
+      this.fetchData(nextProps.url)
     }
 
     return true
@@ -182,7 +182,7 @@ class ApiChart extends Component {
   componentWillMount() {
     let { url } = this.props
 
-    url && this.fetchData({ url })
+    url && this.fetchData(url)
   }
 
   componentWillUnmount() {
