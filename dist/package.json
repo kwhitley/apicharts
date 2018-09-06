@@ -1,6 +1,6 @@
 {
   "name": "apicharts",
-  "version": "0.1.0",
+  "version": "0.3.3",
   "scripts": {
     "lint": "eslint **/*.js",
     "test": "nyc mocha $(find '../src' -name '*.spec.js') --recursive --require babel-core/register",
@@ -16,7 +16,7 @@
     "node": ">=6.0.0"
   },
   "description": "Simple charting components for external & dynamic data sources... give it a url and go!",
-  "main": "dist/apichart.js",
+  "main": "src/Apichart.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/kwhitley/apicharts.git"
@@ -61,9 +61,9 @@
     "axios": "^0.18.0",
     "echarts": "^4.1.0",
     "echarts-for-react": "^2.0.13",
-    "supergeneric": "^1.1.0",
     "object-path": "^0.11.4",
-    "prop-types": "^15.6.2"
+    "prop-types": "^15.6.2",
+    "supergeneric": "^1.1.0"
   },
   "peerDependencies": {
     "react": "^16.4.1"
