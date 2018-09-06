@@ -66,7 +66,8 @@ var getYAxis = function getYAxis(series, timeseries, yAxis, autoscale) {
 };
 
 exports.default = function (_ref) {
-  var autoscale = _ref.autoscale,
+  var animation = _ref.animation,
+      autoscale = _ref.autoscale,
       colors = _ref.colors,
       legend = _ref.legend,
       series = _ref.series,
@@ -78,7 +79,7 @@ exports.default = function (_ref) {
       zoomable = _ref.zoomable,
       zoomslider = _ref.zoomslider;
   return {
-    animation: true,
+    animation: animation === false ? false : true,
     title: {
       text: title,
       top: 5,

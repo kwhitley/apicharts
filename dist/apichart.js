@@ -103,13 +103,8 @@ var ApiChart = function (_Component) {
   (0, _createClass3.default)(ApiChart, [{
     key: 'fetchData',
     value: function () {
-      var _ref2 = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(_ref) {
+      var _ref = (0, _asyncToGenerator3.default)( /*#__PURE__*/_regenerator2.default.mark(function _callee(source) {
         var _this2 = this;
-
-        var _ref$useFetcher = _ref.useFetcher,
-            useFetcher = _ref$useFetcher === undefined ? false : _ref$useFetcher,
-            _ref$url = _ref.url,
-            url = _ref$url === undefined ? undefined : _ref$url;
 
         var isPolling, _props, type, dataPath, formatter, polling, getFeed, getFeedItem, useUrl, response, data;
 
@@ -120,7 +115,7 @@ var ApiChart = function (_Component) {
                 isPolling = this.state.isPolling;
                 _props = this.props, type = _props.type, dataPath = _props.dataPath, formatter = _props.formatter, polling = _props.polling, getFeed = _props.getFeed, getFeedItem = _props.getFeedItem;
 
-                if (url) {
+                if (source) {
                   _context.next = 4;
                   break;
                 }
@@ -131,7 +126,7 @@ var ApiChart = function (_Component) {
 
                 // console.log(`loading data from ${url}...`)
 
-                useUrl = useFetcher ? '/api/fetch?url=' + url : url;
+                useUrl = this.useFetcher ? '/api/fetch?url=' + source : source;
                 _context.prev = 5;
                 _context.next = 8;
                 return _axios2.default.get(useUrl).then(function (r) {
@@ -148,38 +143,38 @@ var ApiChart = function (_Component) {
                   data = data.map(getFeedItem);
                 }
 
-                data.reverse();
                 this.receiveData(data);
 
                 if (polling && !this.poller) {
                   // console.log('polling enabled, setting polling interval of', pollingInterval, 'seconds')
                   this.poller = setInterval(function () {
-                    return _this2.fetchData({ url: url, useFetcher: useFetcher });
+                    return _this2.fetchData(source);
                   }, (0, _time.getMilliseconds)(polling) || 10000);
-                  this.setState({ isPolling: true });
+                  this.chart && this.setState({ isPolling: true });
                 }
-                _context.next = 21;
+                _context.next = 20;
                 break;
 
-              case 17:
-                _context.prev = 17;
+              case 16:
+                _context.prev = 16;
                 _context.t0 = _context['catch'](5);
 
-                if (!useFetcher) {
-                  this.fetchData({ useFetcher: true, url: url }); // try once with fetcher when CORS blocked
+                if (!this.useFetcher) {
+                  this.useFetcher = true;
+                  this.fetchData(source); // try again with fetcher when CORS blocked
                 }
                 console.warn(_context.t0);
 
-              case 21:
+              case 20:
               case 'end':
                 return _context.stop();
             }
           }
-        }, _callee, this, [[5, 17]]);
+        }, _callee, this, [[5, 16]]);
       }));
 
       function fetchData(_x) {
-        return _ref2.apply(this, arguments);
+        return _ref.apply(this, arguments);
       }
 
       return fetchData;
@@ -314,7 +309,7 @@ var ApiChart = function (_Component) {
         config.series.push(extendedSeries);
       });
 
-      this.setState({ config: config });
+      this.chart && this.setState({ config: config });
     }
   }, {
     key: 'shouldComponentUpdate',
@@ -324,8 +319,8 @@ var ApiChart = function (_Component) {
           seriesData = _state.seriesData;
 
 
-      if (nextProps.url !== this.props.url) {
-        this.fetchData({ url: nextProps.url });
+      if (nextProps !== this.props) {
+        this.fetchData(nextProps.url);
       }
 
       return true;
@@ -336,12 +331,19 @@ var ApiChart = function (_Component) {
       var url = this.props.url;
 
 
-      url && this.fetchData({ url: url });
+      url && this.fetchData(url);
+
+      console.log('apichart mounted');
     }
   }, {
     key: 'componentWillUnmount',
     value: function componentWillUnmount() {
+      this.poller && clearTimeout(this.poller);
+
       this.chart && this.chart.dispose();
+      this.chart = undefined;
+
+      console.log('apichart unmounted');
     }
   }, {
     key: 'setChart',

@@ -188,6 +188,8 @@ class ApiChart extends Component {
   }
 
   componentWillUnmount() {
+    this.poller && clearTimeout(this.poller)
+
     this.chart && this.chart.dispose()
     this.chart = undefined
 
